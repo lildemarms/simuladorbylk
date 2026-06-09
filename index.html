@@ -136,6 +136,8 @@
 
   .badge-pix{margin-top:18px;background:rgba(21,196,102,.22);border:1px solid rgba(21,196,102,.5);color:#d6ffe8;font-size:13px;font-weight:600;padding:10px 14px;border-radius:12px;display:flex;gap:8px;align-items:center}
 
+  .valor-box input::placeholder{color:#b0c2b8;font-weight:400}
+  .valor-box input{caret-color:var(--verde);}
   .rodape{margin-top:22px;font-size:12px;color:var(--cinza);line-height:1.6}
   .rodape strong{color:var(--verde-escuro)}
   a{color:var(--verde-escuro-2)}
@@ -214,7 +216,7 @@
         <label class="titulo" for="valor">Valor da venda</label>
         <div class="valor-box">
           <span class="cifrao">R$</span>
-          <input type="text" id="valor" inputmode="decimal" value="0,00" autocomplete="off">
+          <input type="text" id="valor" inputmode="numeric" value="" autocomplete="off" placeholder="0,00">
         </div>
       </div>
 
@@ -235,21 +237,21 @@
     <!-- Coluna de resultado -->
     <div class="resultado">
       <span class="res-label">Você recebe</span>
-      <div class="res-liquido"><small>R$</small><span id="liquido">0,00</span></div>
-      <span class="res-tipo" id="tipoTexto">Débito · taxa de 0,00%</span>
+      <div class="res-liquido"><small>R$</small><span id="liquido">98,31</span></div>
+      <span class="res-tipo" id="tipoTexto">Débito · taxa de 1,69%</span>
 
       <div class="res-linhas">
         <div class="res-item">
           <span class="k">Taxa aplicada</span>
-          <span class="v taxa" id="taxaPct">0,00%</span>
+          <span class="v taxa" id="taxaPct">1,69%</span>
         </div>
         <div class="res-item">
           <span class="k">Valor da venda</span>
-          <span class="v" id="bruto">R$ 0,00</span>
+          <span class="v" id="bruto">R$ 100,00</span>
         </div>
         <div class="res-item">
           <span class="k" id="linhaTaxaLabel">Taxa cobrada</span>
-          <span class="v desc" id="descontoVal">− R$ 0,00</span>
+          <span class="v desc" id="descontoVal">− R$ 1,69</span>
         </div>
         <div class="res-item" id="linhaClientePaga" style="display:none">
           <span class="k">Cliente paga</span>
@@ -336,12 +338,21 @@ const estado = {
 /* ---------- Utilidades ---------- */
 const fmt = n => n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtPct = n => (Number.isInteger(n*100) ? n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) : fmt(n)) + "%";
-function parseValor(str){
-  if(!str) return 0;
-  let s = str.replace(/[^\d,.-]/g,"").replace(/\.(?=\d{3})/g,"").replace(",",".");
-  const v = parseFloat(s);
-  return isNaN(v) ? 0 : v;
+
+/* ---------- Lógica do campo valor (estilo calculadora) ----------
+   Armazena centavos como inteiro. Ex: R$ 12,34 → centavos = 1234
+   Cada tecla numérica empurra um dígito pela direita.
+   Backspace apaga o último dígito.                               */
+let centavos = 0;
+
+function centavosParaValor(c){ return c / 100; }
+
+function atualizarCampoValor(){
+  const inp = document.getElementById("valor");
+  inp.value = centavos > 0 ? fmt(centavosParaValor(centavos)) : "";
 }
+
+function calcValorAtual(){ return centavosParaValor(centavos); }
 
 /* ---------- Resolve a tabela de taxa correta ---------- */
 function tabelaAtual(){
@@ -392,14 +403,28 @@ function atualizarVisibilidade(){
 
 function calcular(){
   atualizarVisibilidade();
-  const valor = parseValor(document.getElementById("valor").value);
+  const valor = calcValorAtual();
   const taxa = taxaSelecionada();
   const t = taxa/100;
-  const repassar = estado.repassar && taxa > 0;   // Pix (0%) não tem taxa a repassar
+  const repassar = estado.repassar && taxa > 0;
+
+  // Painel vazio quando não há valor
+  if(centavos === 0){
+    document.getElementById("liquido").textContent = "—";
+    document.getElementById("bruto").textContent = "R$ 0,00";
+    document.getElementById("taxaPct").textContent = fmtPct(taxa);
+    document.getElementById("tipoTexto").textContent = nomeForma() + " · taxa de " + fmtPct(taxa);
+    document.getElementById("linhaTaxaLabel").textContent = "Taxa cobrada";
+    document.getElementById("descontoVal").textContent = "—";
+    document.getElementById("descontoVal").classList.add("desc");
+    document.getElementById("linhaClientePaga").style.display = "none";
+    document.getElementById("parcelaBox").style.display = "none";
+    document.getElementById("badgePix").style.display = estado.forma==="pix" ? "flex" : "none";
+    return;
+  }
 
   let cobrado, recebe, taxaReais;
   if(repassar){
-    // Gross-up: cobra-se o suficiente para que, após a taxa, sobre o valor cheio
     cobrado   = t < 1 ? valor/(1-t) : valor;
     recebe    = valor;
     taxaReais = cobrado - valor;
@@ -415,7 +440,6 @@ function calcular(){
   document.getElementById("tipoTexto").textContent =
     nomeForma() + " · taxa de " + fmtPct(taxa);
 
-  // Linha da taxa: desconto (absorvida) ou acréscimo (repassada)
   const lblTaxa = document.getElementById("linhaTaxaLabel");
   const descEl  = document.getElementById("descontoVal");
   const linhaCli = document.getElementById("linhaClientePaga");
@@ -432,9 +456,8 @@ function calcular(){
     linhaCli.style.display = "none";
   }
 
-  // Caixa de parcela
   const box = document.getElementById("parcelaBox");
-  if(estado.forma==="parcelado" && valor>0){
+  if(estado.forma==="parcelado"){
     box.style.display="block";
     const totalCli = repassar ? cobrado : valor;
     const porParcela = totalCli/estado.parcelas;
@@ -446,7 +469,6 @@ function calcular(){
     box.style.display="none";
   }
 
-  // Selo Pix
   document.getElementById("badgePix").style.display =
     estado.forma==="pix" ? "flex" : "none";
 }
@@ -474,15 +496,47 @@ ligarPills("forma","forma", ()=>{
 document.getElementById("plano").addEventListener("change",e=>{estado.plano=e.target.value;calcular();});
 document.getElementById("bandeira").addEventListener("change",e=>{estado.bandeira=e.target.value;calcular();});
 document.getElementById("parcelas").addEventListener("change",e=>{estado.parcelas=parseInt(e.target.value,10);calcular();});
-document.getElementById("valor").addEventListener("input",calcular);
-document.getElementById("repassar").addEventListener("change",e=>{estado.repassar=e.target.checked;calcular();});
+document.getElementById("valor").addEventListener("keydown", e => {
+  const digito = e.key >= "0" && e.key <= "9";
+  const apagar = e.key === "Backspace" || e.key === "Delete";
+  const limpar  = e.key === "Escape";
 
-// Formata o valor ao sair do campo
-document.getElementById("valor").addEventListener("blur",e=>{
-  const v = parseValor(e.target.value);
-  e.target.value = v>0 ? fmt(v) : "";
+  if(digito){
+    e.preventDefault();
+    // Limite: 10 dígitos = R$ 99.999.999,99
+    if(centavos < 1_000_000_000){
+      centavos = centavos * 10 + parseInt(e.key, 10);
+    }
+  } else if(apagar){
+    e.preventDefault();
+    centavos = Math.floor(centavos / 10);
+  } else if(limpar){
+    e.preventDefault();
+    centavos = 0;
+  } else if(!["Tab","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End"].includes(e.key)){
+    // Bloqueia qualquer outra tecla (letras, pontuação, etc.)
+    e.preventDefault();
+    return;
+  }
+
+  atualizarCampoValor();
   calcular();
 });
+
+// Impede colar texto não-numérico e converte paste de valor decimal
+document.getElementById("valor").addEventListener("paste", e => {
+  e.preventDefault();
+  const txt = (e.clipboardData || window.clipboardData).getData("text");
+  // Aceita formatos "100", "100.50", "100,50"
+  const num = parseFloat(txt.replace(",", "."));
+  if(!isNaN(num) && num >= 0){
+    centavos = Math.min(Math.round(num * 100), 999_999_999);
+    atualizarCampoValor();
+    calcular();
+  }
+});
+
+document.getElementById("repassar").addEventListener("change",e=>{estado.repassar=e.target.checked;calcular();});
 
 preencherParcelas();
 calcular();
