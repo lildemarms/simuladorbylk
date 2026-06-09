@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Simulador de Taxas Ton</title>
+<title>Simulador de Taxas — By LK</title>
 
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0c3b29">
-<meta name="description" content="Simule as taxas das maquininhas Ton e veja quanto você recebe em cada venda.">
+<meta name="theme-color" content="#3d1f1f">
+<meta name="description" content="Simule as taxas das maquininhas e veja quanto você recebe em cada venda.">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Taxas Ton">
+<meta name="apple-mobile-web-app-title" content="By LK">
 <meta name="mobile-web-app-capable" content="yes">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,18 +21,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --verde:#15c466;          /* verde Ton vibrante */
-    --verde-claro:#e7faef;
-    --verde-escuro:#0c3b29;   /* verde texto/logo */
-    --verde-escuro-2:#0a5e3a;
-    --tinta:#0c3b29;
-    --cinza:#5b6b63;
-    --cinza-claro:#eef2f0;
-    --linha:#dde6e1;
+    --rosa:#c4867a;             /* rose gold principal */
+    --rosa-claro:#fdf0ee;       /* fundo claro blush */
+    --rosa-medio:#e8b4ac;       /* rose gold médio / bordas */
+    --vinho:#3d1f1f;            /* vinho escuro — texto e painel */
+    --vinho-2:#5a2e2e;          /* vinho mais claro para gradiente */
+    --tinta:#3d1f1f;
+    --cinza:#8c6f6f;
+    --cinza-claro:#f5e9e7;
+    --linha:#e8d0cc;
     --branco:#ffffff;
-    --fundo:#f2f7f4;
+    --fundo:#fdf6f4;
     --radius:18px;
-    --sombra:0 10px 40px -18px rgba(12,59,41,.35);
+    --sombra:0 10px 40px -18px rgba(61,31,31,.28);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{
@@ -49,11 +50,12 @@
   /* Cabeçalho */
   .topo{display:flex;align-items:center;gap:12px;margin-bottom:6px}
   .logo{
-    font-family:'Poppins',sans-serif;font-weight:800;font-size:26px;
-    color:var(--verde-escuro);letter-spacing:-.5px;display:flex;align-items:center;gap:7px;
+    font-family:'Poppins',sans-serif;font-weight:800;font-size:22px;
+    color:var(--vinho);letter-spacing:-.5px;display:flex;align-items:center;gap:5px;
   }
-  .logo .dot{width:13px;height:13px;border-radius:50%;background:var(--verde);display:inline-block;margin-top:6px}
-  h1{font-family:'Poppins',sans-serif;font-weight:700;font-size:clamp(24px,4.5vw,34px);color:var(--verde-escuro);letter-spacing:-.6px;margin:14px 0 6px}
+  .logo .by{font-size:13px;font-weight:600;color:var(--cinza);letter-spacing:.5px;text-transform:uppercase;margin-right:2px}
+  .logo .coracoes{color:var(--rosa);font-size:16px;line-height:1}
+  h1{font-family:'Poppins',sans-serif;font-weight:700;font-size:clamp(24px,4.5vw,34px);color:var(--vinho);letter-spacing:-.6px;margin:14px 0 6px}
   .sub{color:var(--cinza);font-size:15px;max-width:560px}
 
   /* Card principal */
@@ -67,7 +69,7 @@
   .form{padding:28px 26px}
   .grupo{margin-bottom:20px}
   .grupo > label.titulo{
-    display:block;font-size:13px;font-weight:700;color:var(--verde-escuro);
+    display:block;font-size:13px;font-weight:700;color:var(--vinho);
     text-transform:uppercase;letter-spacing:.4px;margin-bottom:9px;
   }
 
@@ -78,9 +80,9 @@
     padding:9px 14px;border-radius:999px;font-size:13.5px;font-weight:600;
     cursor:pointer;transition:all .15s ease;font-family:inherit;
   }
-  .pill:hover{border-color:var(--verde)}
-  .pill.ativo{background:var(--verde);border-color:var(--verde);color:#063}
-  .pill:focus-visible{outline:3px solid rgba(21,196,102,.45);outline-offset:2px}
+  .pill:hover{border-color:var(--rosa)}
+  .pill.ativo{background:var(--rosa);border-color:var(--rosa);color:#fff}
+  .pill:focus-visible{outline:3px solid rgba(196,134,122,.45);outline-offset:2px}
 
   /* Select e input */
   select,input[type=text]{
@@ -88,7 +90,7 @@
     padding:13px 14px;font-size:15px;font-family:inherit;color:var(--tinta);
     background:var(--branco);transition:border-color .15s;
   }
-  select:focus,input:focus{outline:none;border-color:var(--verde)}
+  select:focus,input:focus{outline:none;border-color:var(--rosa)}
   .valor-box{position:relative}
   .valor-box .cifrao{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--cinza);font-size:16px}
   .valor-box input{padding-left:36px;font-weight:700;font-size:18px}
@@ -99,54 +101,54 @@
   .hint{font-size:12px;color:var(--cinza);margin-top:7px}
 
   /* Toggle "cobrar a taxa do cliente" */
-  .switch-row{display:flex;align-items:flex-start;gap:13px;background:var(--verde-claro);
-    border:1.5px solid #cdeedd;border-radius:14px;padding:14px 15px;cursor:pointer;user-select:none}
-  .switch-row:hover{border-color:var(--verde)}
+  .switch-row{display:flex;align-items:flex-start;gap:13px;background:var(--rosa-claro);
+    border:1.5px solid var(--rosa-medio);border-radius:14px;padding:14px 15px;cursor:pointer;user-select:none}
+  .switch-row:hover{border-color:var(--rosa)}
   .switch{position:relative;flex:0 0 auto;width:46px;height:26px;margin-top:1px}
   .switch input{opacity:0;width:0;height:0;position:absolute}
-  .slider{position:absolute;inset:0;background:#c7d4cd;border-radius:999px;transition:.2s}
+  .slider{position:absolute;inset:0;background:#d9b8b4;border-radius:999px;transition:.2s}
   .slider::before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;
     background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
-  .switch input:checked + .slider{background:var(--verde)}
+  .switch input:checked + .slider{background:var(--rosa)}
   .switch input:checked + .slider::before{transform:translateX(20px)}
-  .switch input:focus-visible + .slider{outline:3px solid rgba(21,196,102,.45);outline-offset:2px}
-  .switch-text b{display:block;font-weight:700;color:var(--verde-escuro);font-size:14.5px;margin-bottom:2px;font-family:'Poppins',sans-serif}
+  .switch input:focus-visible + .slider{outline:3px solid rgba(196,134,122,.45);outline-offset:2px}
+  .switch-text b{display:block;font-weight:700;color:var(--vinho);font-size:14.5px;margin-bottom:2px;font-family:'Poppins',sans-serif}
   .switch-text span{color:var(--cinza);font-size:12.5px;line-height:1.45}
 
   /* Painel de resultado */
   .resultado{
-    background:linear-gradient(160deg,var(--verde-escuro) 0%,var(--verde-escuro-2) 100%);
+    background:linear-gradient(160deg,var(--vinho) 0%,var(--vinho-2) 100%);
     color:#fff;padding:28px 24px;display:flex;flex-direction:column;
   }
-  .res-label{font-size:13px;font-weight:600;color:#a9e9c6;text-transform:uppercase;letter-spacing:.5px}
+  .res-label{font-size:13px;font-weight:600;color:var(--rosa-medio);text-transform:uppercase;letter-spacing:.5px}
   .res-liquido{font-family:'Poppins',sans-serif;font-weight:800;font-size:40px;letter-spacing:-1px;margin:4px 0 2px;line-height:1.05}
   .res-liquido small{font-size:18px;font-weight:600;opacity:.7;margin-right:2px}
-  .res-tipo{font-size:13.5px;color:#cdeedd}
+  .res-tipo{font-size:13.5px;color:#e8c8c4}
 
   .res-linhas{margin-top:22px;border-top:1px solid rgba(255,255,255,.16);padding-top:16px;display:flex;flex-direction:column;gap:12px}
   .res-item{display:flex;justify-content:space-between;align-items:baseline;font-size:14px}
-  .res-item .k{color:#bfe7d2}
+  .res-item .k{color:#e0b8b3}
   .res-item .v{font-weight:700}
   .res-item .v.taxa{color:#fff;background:rgba(255,255,255,.14);padding:2px 10px;border-radius:999px;font-size:13px}
   .res-item .v.desc{color:#ffd9c2}
 
   .parcela-box{margin-top:18px;background:rgba(255,255,255,.10);border-radius:12px;padding:13px 15px}
-  .parcela-box .pk{font-size:12.5px;color:#bfe7d2}
+  .parcela-box .pk{font-size:12.5px;color:#e0b8b3}
   .parcela-box .pv{font-family:'Poppins',sans-serif;font-weight:700;font-size:19px;margin-top:2px}
 
-  .badge-pix{margin-top:18px;background:rgba(21,196,102,.22);border:1px solid rgba(21,196,102,.5);color:#d6ffe8;font-size:13px;font-weight:600;padding:10px 14px;border-radius:12px;display:flex;gap:8px;align-items:center}
+  .badge-pix{margin-top:18px;background:rgba(196,134,122,.25);border:1px solid rgba(196,134,122,.55);color:#fde8e4;font-size:13px;font-weight:600;padding:10px 14px;border-radius:12px;display:flex;gap:8px;align-items:center}
 
-  .valor-box input::placeholder{color:#b0c2b8;font-weight:400}
-  .valor-box input{caret-color:var(--verde);}
+  .valor-box input::placeholder{color:#c8a09a;font-weight:400}
+  .valor-box input{caret-color:var(--rosa);}
   .rodape{margin-top:22px;font-size:12px;color:var(--cinza);line-height:1.6}
-  .rodape strong{color:var(--verde-escuro)}
-  a{color:var(--verde-escuro-2)}
+  .rodape strong{color:var(--vinho)}
+  a{color:var(--vinho-2)}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="topo">
-    <span class="logo">ton<span class="dot"></span></span>
+    <span class="logo"><span class="by">By</span> LK <span class="coracoes">♡</span></span>
   </div>
   <h1>Simule as taxas das suas vendas</h1>
   <p class="sub">Escolha a maquininha, o prazo de recebimento e a forma de pagamento para ver quanto você recebe em cada venda.</p>
