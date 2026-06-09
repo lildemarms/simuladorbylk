@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Simulador de Taxas Ton</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0c3b29">
+<meta name="description" content="Simule as taxas das maquininhas Ton e veja quanto você recebe em cada venda.">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Taxas Ton">
+<meta name="mobile-web-app-capable" content="yes">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --verde:#15c466;          /* verde Ton vibrante */
+    --verde-claro:#e7faef;
+    --verde-escuro:#0c3b29;   /* verde texto/logo */
+    --verde-escuro-2:#0a5e3a;
+    --tinta:#0c3b29;
+    --cinza:#5b6b63;
+    --cinza-claro:#eef2f0;
+    --linha:#dde6e1;
+    --branco:#ffffff;
+    --fundo:#f2f7f4;
+    --radius:18px;
+    --sombra:0 10px 40px -18px rgba(12,59,41,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    background:var(--fundo);
+    color:var(--tinta);
+    line-height:1.45;
+    padding:28px 16px 60px;
+    display:flex;justify-content:center;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{width:100%;max-width:860px}
+
+  /* Cabeçalho */
+  .topo{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .logo{
+    font-family:'Poppins',sans-serif;font-weight:800;font-size:26px;
+    color:var(--verde-escuro);letter-spacing:-.5px;display:flex;align-items:center;gap:7px;
+  }
+  .logo .dot{width:13px;height:13px;border-radius:50%;background:var(--verde);display:inline-block;margin-top:6px}
+  h1{font-family:'Poppins',sans-serif;font-weight:700;font-size:clamp(24px,4.5vw,34px);color:var(--verde-escuro);letter-spacing:-.6px;margin:14px 0 6px}
+  .sub{color:var(--cinza);font-size:15px;max-width:560px}
+
+  /* Card principal */
+  .card{
+    background:var(--branco);border-radius:var(--radius);
+    box-shadow:var(--sombra);overflow:hidden;margin-top:26px;
+    display:grid;grid-template-columns:1fr 320px;
+  }
+  @media(max-width:740px){.card{grid-template-columns:1fr}}
+
+  .form{padding:28px 26px}
+  .grupo{margin-bottom:20px}
+  .grupo > label.titulo{
+    display:block;font-size:13px;font-weight:700;color:var(--verde-escuro);
+    text-transform:uppercase;letter-spacing:.4px;margin-bottom:9px;
+  }
+
+  /* Pills de seleção */
+  .pills{display:flex;flex-wrap:wrap;gap:8px}
+  .pill{
+    border:1.5px solid var(--linha);background:var(--branco);color:var(--tinta);
+    padding:9px 14px;border-radius:999px;font-size:13.5px;font-weight:600;
+    cursor:pointer;transition:all .15s ease;font-family:inherit;
+  }
+  .pill:hover{border-color:var(--verde)}
+  .pill.ativo{background:var(--verde);border-color:var(--verde);color:#063}
+  .pill:focus-visible{outline:3px solid rgba(21,196,102,.45);outline-offset:2px}
+
+  /* Select e input */
+  select,input[type=text]{
+    width:100%;border:1.5px solid var(--linha);border-radius:12px;
+    padding:13px 14px;font-size:15px;font-family:inherit;color:var(--tinta);
+    background:var(--branco);transition:border-color .15s;
+  }
+  select:focus,input:focus{outline:none;border-color:var(--verde)}
+  .valor-box{position:relative}
+  .valor-box .cifrao{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--cinza);font-size:16px}
+  .valor-box input{padding-left:36px;font-weight:700;font-size:18px}
+
+  .row{display:flex;gap:12px}
+  .row > div{flex:1;min-width:0}
+
+  .hint{font-size:12px;color:var(--cinza);margin-top:7px}
+
+  /* Toggle "cobrar a taxa do cliente" */
+  .switch-row{display:flex;align-items:flex-start;gap:13px;background:var(--verde-claro);
+    border:1.5px solid #cdeedd;border-radius:14px;padding:14px 15px;cursor:pointer;user-select:none}
+  .switch-row:hover{border-color:var(--verde)}
+  .switch{position:relative;flex:0 0 auto;width:46px;height:26px;margin-top:1px}
+  .switch input{opacity:0;width:0;height:0;position:absolute}
+  .slider{position:absolute;inset:0;background:#c7d4cd;border-radius:999px;transition:.2s}
+  .slider::before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;
+    background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .switch input:checked + .slider{background:var(--verde)}
+  .switch input:checked + .slider::before{transform:translateX(20px)}
+  .switch input:focus-visible + .slider{outline:3px solid rgba(21,196,102,.45);outline-offset:2px}
+  .switch-text b{display:block;font-weight:700;color:var(--verde-escuro);font-size:14.5px;margin-bottom:2px;font-family:'Poppins',sans-serif}
+  .switch-text span{color:var(--cinza);font-size:12.5px;line-height:1.45}
+
+  /* Painel de resultado */
+  .resultado{
+    background:linear-gradient(160deg,var(--verde-escuro) 0%,var(--verde-escuro-2) 100%);
+    color:#fff;padding:28px 24px;display:flex;flex-direction:column;
+  }
+  .res-label{font-size:13px;font-weight:600;color:#a9e9c6;text-transform:uppercase;letter-spacing:.5px}
+  .res-liquido{font-family:'Poppins',sans-serif;font-weight:800;font-size:40px;letter-spacing:-1px;margin:4px 0 2px;line-height:1.05}
+  .res-liquido small{font-size:18px;font-weight:600;opacity:.7;margin-right:2px}
+  .res-tipo{font-size:13.5px;color:#cdeedd}
+
+  .res-linhas{margin-top:22px;border-top:1px solid rgba(255,255,255,.16);padding-top:16px;display:flex;flex-direction:column;gap:12px}
+  .res-item{display:flex;justify-content:space-between;align-items:baseline;font-size:14px}
+  .res-item .k{color:#bfe7d2}
+  .res-item .v{font-weight:700}
+  .res-item .v.taxa{color:#fff;background:rgba(255,255,255,.14);padding:2px 10px;border-radius:999px;font-size:13px}
+  .res-item .v.desc{color:#ffd9c2}
+
+  .parcela-box{margin-top:18px;background:rgba(255,255,255,.10);border-radius:12px;padding:13px 15px}
+  .parcela-box .pk{font-size:12.5px;color:#bfe7d2}
+  .parcela-box .pv{font-family:'Poppins',sans-serif;font-weight:700;font-size:19px;margin-top:2px}
+
+  .badge-pix{margin-top:18px;background:rgba(21,196,102,.22);border:1px solid rgba(21,196,102,.5);color:#d6ffe8;font-size:13px;font-weight:600;padding:10px 14px;border-radius:12px;display:flex;gap:8px;align-items:center}
+
+  .rodape{margin-top:22px;font-size:12px;color:var(--cinza);line-height:1.6}
+  .rodape strong{color:var(--verde-escuro)}
+  a{color:var(--verde-escuro-2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topo">
+    <span class="logo">ton<span class="dot"></span></span>
+  </div>
+  <h1>Simule as taxas das suas vendas</h1>
+  <p class="sub">Escolha a maquininha, o prazo de recebimento e a forma de pagamento para ver quanto você recebe em cada venda.</p>
+
+  <div class="card">
+    <!-- Coluna de controles -->
+    <div class="form">
+      <div class="grupo">
+        <label class="titulo">Maquininha</label>
+        <div class="pills" id="maquininha">
+          <button class="pill ativo" data-v="t3">T3</button>
+          <button class="pill" data-v="t2">T2</button>
+          <button class="pill" data-v="t3smart">T3 Smart</button>
+          <button class="pill" data-v="t1">T1</button>
+          <button class="pill" data-v="tapton">TapTon</button>
+        </div>
+      </div>
+
+      <div class="grupo">
+        <label class="titulo">Prazo de recebimento</label>
+        <div class="pills" id="prazo">
+          <button class="pill ativo" data-v="1dia">Em 1 dia útil</button>
+          <button class="pill" data-v="mesmodia">Na hora (mesmo dia)</button>
+        </div>
+      </div>
+
+      <div class="grupo" id="grupoPlano">
+        <label class="titulo" for="plano">Seu faturamento mensal no cartão</label>
+        <select id="plano">
+          <option value="promo">Promocional — 30 dias ou até R$ 5 mil (novos clientes)</option>
+          <option value="ate3" selected>Até R$ 3 mil</option>
+          <option value="de3a6">De R$ 3 mil a R$ 6 mil</option>
+          <option value="de6a10">De R$ 6 mil a R$ 10 mil</option>
+          <option value="de10a30">De R$ 10 mil a R$ 30 mil</option>
+          <option value="acima30">Acima de R$ 30 mil</option>
+        </select>
+        <p class="hint">As taxas da Ton são progressivas: quanto mais você vende, menores ficam.</p>
+      </div>
+
+      <div class="grupo">
+        <label class="titulo">Forma de pagamento</label>
+        <div class="pills" id="forma">
+          <button class="pill" data-v="pix">Pix</button>
+          <button class="pill ativo" data-v="debito">Débito</button>
+          <button class="pill" data-v="credito1">Crédito à vista</button>
+          <button class="pill" data-v="parcelado">Crédito parcelado</button>
+        </div>
+      </div>
+
+      <div class="grupo" id="grupoBandeiraParcelas">
+        <div class="row">
+          <div>
+            <label class="titulo" for="bandeira">Bandeira</label>
+            <select id="bandeira">
+              <option value="mv" selected>Mastercard / Visa</option>
+              <option value="ea">Elo / Amex</option>
+            </select>
+          </div>
+          <div id="caixaParcelas" style="display:none">
+            <label class="titulo" for="parcelas">Parcelas</label>
+            <select id="parcelas"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="grupo">
+        <label class="titulo" for="valor">Valor da venda</label>
+        <div class="valor-box">
+          <span class="cifrao">R$</span>
+          <input type="text" id="valor" inputmode="decimal" value="100,00" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="grupo" style="margin-bottom:0">
+        <label class="switch-row" for="repassar">
+          <span class="switch">
+            <input type="checkbox" id="repassar">
+            <span class="slider"></span>
+          </span>
+          <span class="switch-text">
+            <b>Cobrar a taxa do cliente</b>
+            <span>A taxa é somada ao valor final da venda — você recebe o valor cheio e o cliente paga a taxa.</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Coluna de resultado -->
+    <div class="resultado">
+      <span class="res-label">Você recebe</span>
+      <div class="res-liquido"><small>R$</small><span id="liquido">98,31</span></div>
+      <span class="res-tipo" id="tipoTexto">Débito · taxa de 1,69%</span>
+
+      <div class="res-linhas">
+        <div class="res-item">
+          <span class="k">Taxa aplicada</span>
+          <span class="v taxa" id="taxaPct">1,69%</span>
+        </div>
+        <div class="res-item">
+          <span class="k">Valor da venda</span>
+          <span class="v" id="bruto">R$ 100,00</span>
+        </div>
+        <div class="res-item">
+          <span class="k" id="linhaTaxaLabel">Taxa cobrada</span>
+          <span class="v desc" id="descontoVal">− R$ 1,69</span>
+        </div>
+        <div class="res-item" id="linhaClientePaga" style="display:none">
+          <span class="k">Cliente paga</span>
+          <span class="v" id="clientePagaVal">—</span>
+        </div>
+      </div>
+
+      <div class="parcela-box" id="parcelaBox" style="display:none">
+        <div class="pk" id="parcelaLabel">Seu cliente paga</div>
+        <div class="pv" id="parcelaVal">—</div>
+      </div>
+
+      <div class="badge-pix" id="badgePix" style="display:none">
+        ✓ Pix sem taxa — você recebe 100% da venda
+      </div>
+    </div>
+  </div>
+
+  <p class="rodape">
+    <strong>Tabela oficial Ton</strong> — Pix grátis em todos os planos. Taxas em % por transação, válidas para novos clientes e sujeitas ao plano contratado. T1, T2, T3 e T3 Smart compartilham a mesma tabela; o TapTon possui tabela própria e não usa faixas de faturamento.
+    Valores atualizados em 05/06/2026. Consulte sempre as taxas vigentes no app do Ton.
+  </p>
+</div>
+
+<script>
+/* ============================================================
+   TABELAS DE TAXAS TON  (% por transação)
+   parc[0] = crédito 1x (à vista) ... parc[11] = 12x
+   ============================================================ */
+const TABELAS = {
+  standard: {            // T1 / T2 / T3 / T3 Smart
+    "1dia": {
+      promo:    { mv:{pix:0,deb:0.57, parc:[0.57,3.97,3.97,4.97,5.97,6.97,7.97,7.97,7.97,7.97,7.97,7.97]},
+                  ea:{pix:0,deb:2.57, parc:[4.34,7.02,7.58,8.38,9.38,10.38,10.98,11.38,12.38,12.88,13.74,13.78]} },
+      ate3:     { mv:{pix:0,deb:1.69, parc:[3.86,9.86,11.24,12.59,13.92,15.22,16.50,17.76,18.99,20.19,20.39,20.39]},
+                  ea:{pix:0,deb:2.98, parc:[5.15,11.30,12.68,14.03,15.36,16.66,17.94,19.20,20.43,21.78,22.64,22.68]} },
+      de3a6:    { mv:{pix:0,deb:1.39, parc:[3.34,7.29,8.35,9.23,10.10,10.85,10.90,10.95,11.00,11.05,11.73,12.38]},
+                  ea:{pix:0,deb:2.68, parc:[4.63,8.73,9.79,10.67,11.54,12.29,12.34,12.39,12.44,12.64,13.98,14.67]} },
+      de6a10:   { mv:{pix:0,deb:1.32, parc:[3.25,6.69,7.76,8.64,9.51,10.37,10.87,10.92,10.97,11.02,11.70,12.35]},
+                  ea:{pix:0,deb:2.61, parc:[4.54,8.13,9.20,10.08,10.95,11.81,12.31,12.36,12.41,12.61,13.95,14.64]} },
+      de10a30:  { mv:{pix:0,deb:1.22, parc:[3.02,5.38,6.11,7.84,8.56,9.27,9.98,10.68,10.94,10.99,11.67,11.73]},
+                  ea:{pix:0,deb:2.51, parc:[4.31,6.82,7.55,9.28,10.00,10.71,11.42,12.12,12.38,12.58,13.92,14.02]} },
+      acima30:  { mv:{pix:0,deb:1.19, parc:[2.85,5.33,6.06,7.79,8.51,9.22,9.93,10.63,10.91,10.96,11.46,11.51]},
+                  ea:{pix:0,deb:2.48, parc:[4.14,6.77,7.50,9.23,9.95,10.66,11.37,12.07,12.35,12.55,13.71,13.80]} }
+    },
+    "mesmodia": {
+      promo:    { mv:{pix:0,deb:0.57, parc:[0.57,3.97,3.97,4.97,5.97,6.97,7.97,7.97,7.97,7.97,7.97,7.97]},
+                  ea:{pix:0,deb:2.57, parc:[4.34,7.02,7.58,8.38,9.38,10.38,10.98,11.38,12.38,12.88,13.74,13.78]} },
+      ate3:     { mv:{pix:0,deb:1.98, parc:[4.86,10.86,12.24,13.59,14.92,16.22,17.50,18.76,19.99,21.19,21.39,21.39]},
+                  ea:{pix:0,deb:3.27, parc:[6.15,12.30,13.68,15.03,16.36,17.66,18.94,20.20,21.43,22.78,23.64,23.68]} },
+      de3a6:    { mv:{pix:0,deb:1.43, parc:[3.36,7.38,8.97,9.63,10.50,11.18,12.19,13.04,13.07,13.12,13.17,13.22]},
+                  ea:{pix:0,deb:2.72, parc:[4.65,8.82,10.41,11.07,11.94,12.62,13.63,14.48,14.51,14.71,15.42,15.51]} },
+      de6a10:   { mv:{pix:0,deb:1.34, parc:[3.31,7.18,8.56,9.44,10.31,11.17,12.00,12.50,12.55,12.58,12.61,12.66]},
+                  ea:{pix:0,deb:2.63, parc:[4.60,8.62,10.00,10.88,11.75,12.61,13.44,13.94,13.99,14.17,14.86,14.95]} },
+      de10a30:  { mv:{pix:0,deb:1.25, parc:[3.05,6.59,8.19,8.89,9.76,11.10,11.68,11.73,11.78,11.83,11.88,11.95]},
+                  ea:{pix:0,deb:2.54, parc:[4.34,8.03,9.63,10.33,11.20,12.54,13.12,13.17,13.22,13.42,14.13,14.24]} },
+      acima30:  { mv:{pix:0,deb:1.22, parc:[2.91,6.54,8.14,8.84,9.71,10.79,10.84,10.89,10.94,10.99,11.63,11.73]},
+                  ea:{pix:0,deb:2.51, parc:[4.20,7.98,9.58,10.28,11.15,12.23,12.28,12.33,12.38,12.58,13.88,14.02]} }
+    }
+  },
+  tapton: {              // TapTon — sem faixas de faturamento
+    "1dia": {
+      mv:{pix:0,deb:0.79, parc:[3.05,5.75,6.55,8.29,8.55,8.65,9.95,10.09,10.79,11.49,12.19,12.29]},
+      ea:{pix:0,deb:1.98, parc:[4.24,6.94,7.74,9.48,9.74,9.84,11.14,11.28,11.98,12.68,13.38,13.48]}
+    },
+    "mesmodia": {
+      mv:{pix:0,deb:0.87, parc:[3.08,5.79,6.59,8.39,8.59,8.69,9.99,10.19,10.85,11.55,12.25,12.35]},
+      ea:{pix:0,deb:2.06, parc:[4.27,6.98,7.78,9.58,9.78,9.88,11.18,11.38,12.04,12.74,13.44,13.54]}
+    }
+  }
+};
+
+/* ---------- Estado ---------- */
+const estado = {
+  maquininha: "t3",
+  prazo: "1dia",
+  plano: "ate3",
+  forma: "debito",
+  bandeira: "mv",
+  parcelas: 2,
+  repassar: false
+};
+
+/* ---------- Utilidades ---------- */
+const fmt = n => n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtPct = n => (Number.isInteger(n*100) ? n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) : fmt(n)) + "%";
+function parseValor(str){
+  if(!str) return 0;
+  let s = str.replace(/[^\d,.-]/g,"").replace(/\.(?=\d{3})/g,"").replace(",",".");
+  const v = parseFloat(s);
+  return isNaN(v) ? 0 : v;
+}
+
+/* ---------- Resolve a tabela de taxa correta ---------- */
+function tabelaAtual(){
+  if(estado.maquininha === "tapton"){
+    return TABELAS.tapton[estado.prazo][estado.bandeira];
+  }
+  return TABELAS.standard[estado.prazo][estado.plano][estado.bandeira];
+}
+
+function taxaSelecionada(){
+  const t = tabelaAtual();
+  switch(estado.forma){
+    case "pix":       return 0;
+    case "debito":    return t.deb;
+    case "credito1":  return t.parc[0];
+    case "parcelado": return t.parc[estado.parcelas-1];
+  }
+  return 0;
+}
+
+/* ---------- Renderização ---------- */
+function nomeForma(){
+  if(estado.forma==="pix") return "Pix";
+  if(estado.forma==="debito") return "Débito";
+  if(estado.forma==="credito1") return "Crédito à vista";
+  return "Crédito em " + estado.parcelas + "x";
+}
+
+function preencherParcelas(){
+  const sel = document.getElementById("parcelas");
+  if(sel.options.length) return;
+  for(let i=2;i<=12;i++){
+    const o = document.createElement("option");
+    o.value=i; o.textContent=i+"x";
+    sel.appendChild(o);
+  }
+  sel.value = estado.parcelas;
+}
+
+function atualizarVisibilidade(){
+  // Plano (faturamento) some no TapTon
+  document.getElementById("grupoPlano").style.display =
+    estado.maquininha==="tapton" ? "none" : "block";
+  // Parcelas só aparecem em "parcelado"
+  document.getElementById("caixaParcelas").style.display =
+    estado.forma==="parcelado" ? "block" : "none";
+}
+
+function calcular(){
+  atualizarVisibilidade();
+  const valor = parseValor(document.getElementById("valor").value);
+  const taxa = taxaSelecionada();
+  const t = taxa/100;
+  const repassar = estado.repassar && taxa > 0;   // Pix (0%) não tem taxa a repassar
+
+  let cobrado, recebe, taxaReais;
+  if(repassar){
+    // Gross-up: cobra-se o suficiente para que, após a taxa, sobre o valor cheio
+    cobrado   = t < 1 ? valor/(1-t) : valor;
+    recebe    = valor;
+    taxaReais = cobrado - valor;
+  } else {
+    cobrado   = valor;
+    taxaReais = valor * t;
+    recebe    = valor - taxaReais;
+  }
+
+  document.getElementById("liquido").textContent = fmt(recebe);
+  document.getElementById("bruto").textContent = "R$ " + fmt(valor);
+  document.getElementById("taxaPct").textContent = fmtPct(taxa);
+  document.getElementById("tipoTexto").textContent =
+    nomeForma() + " · taxa de " + fmtPct(taxa);
+
+  // Linha da taxa: desconto (absorvida) ou acréscimo (repassada)
+  const lblTaxa = document.getElementById("linhaTaxaLabel");
+  const descEl  = document.getElementById("descontoVal");
+  const linhaCli = document.getElementById("linhaClientePaga");
+  if(repassar){
+    lblTaxa.textContent = "Taxa repassada ao cliente";
+    descEl.textContent  = "+ R$ " + fmt(taxaReais);
+    descEl.classList.remove("desc");
+    linhaCli.style.display = "flex";
+    document.getElementById("clientePagaVal").textContent = "R$ " + fmt(cobrado);
+  } else {
+    lblTaxa.textContent = "Taxa cobrada";
+    descEl.textContent  = "− R$ " + fmt(taxaReais);
+    descEl.classList.add("desc");
+    linhaCli.style.display = "none";
+  }
+
+  // Caixa de parcela
+  const box = document.getElementById("parcelaBox");
+  if(estado.forma==="parcelado" && valor>0){
+    box.style.display="block";
+    const totalCli = repassar ? cobrado : valor;
+    const porParcela = totalCli/estado.parcelas;
+    document.getElementById("parcelaLabel").textContent =
+      "Seu cliente paga em " + estado.parcelas + "x de";
+    document.getElementById("parcelaVal").textContent =
+      "R$ " + fmt(porParcela) + "  (total R$ " + fmt(totalCli) + ")";
+  } else {
+    box.style.display="none";
+  }
+
+  // Selo Pix
+  document.getElementById("badgePix").style.display =
+    estado.forma==="pix" ? "flex" : "none";
+}
+
+/* ---------- Ligações de eventos ---------- */
+function ligarPills(idGrupo, chave, aposClicar){
+  const grupo = document.getElementById(idGrupo);
+  grupo.addEventListener("click", e=>{
+    const btn = e.target.closest(".pill");
+    if(!btn) return;
+    grupo.querySelectorAll(".pill").forEach(p=>p.classList.remove("ativo"));
+    btn.classList.add("ativo");
+    estado[chave] = btn.dataset.v;
+    if(aposClicar) aposClicar();
+    calcular();
+  });
+}
+
+ligarPills("maquininha","maquininha");
+ligarPills("prazo","prazo");
+ligarPills("forma","forma", ()=>{
+  if(estado.forma==="parcelado") preencherParcelas();
+});
+
+document.getElementById("plano").addEventListener("change",e=>{estado.plano=e.target.value;calcular();});
+document.getElementById("bandeira").addEventListener("change",e=>{estado.bandeira=e.target.value;calcular();});
+document.getElementById("parcelas").addEventListener("change",e=>{estado.parcelas=parseInt(e.target.value,10);calcular();});
+document.getElementById("valor").addEventListener("input",calcular);
+document.getElementById("repassar").addEventListener("change",e=>{estado.repassar=e.target.checked;calcular();});
+
+// Formata o valor ao sair do campo
+document.getElementById("valor").addEventListener("blur",e=>{
+  const v = parseValor(e.target.value);
+  e.target.value = v>0 ? fmt(v) : "";
+  calcular();
+});
+
+preencherParcelas();
+calcular();
+
+/* ---------- Registro do Service Worker (offline) ---------- */
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
